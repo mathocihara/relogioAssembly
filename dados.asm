@@ -9,8 +9,8 @@ global mes
 global ano
 
 hora       db 12
-minuto     db 0
-segundo    db 0
+minuto     db 59
+segundo    db 58
 
 dia        db 22
 mes        db 6
