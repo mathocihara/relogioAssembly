@@ -1,4 +1,4 @@
-section .data
+ section .data
 
 global hora
 global minuto
@@ -8,7 +8,7 @@ global dia
 global mes
 global ano
 
-hora       db 12
+hora       db 23
 minuto     db 59
 segundo    db 58
 

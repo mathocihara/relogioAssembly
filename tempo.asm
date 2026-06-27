@@ -1,3 +1,6 @@
+extern dia
+extern mes
+extern ano
 extern segundo
 extern minuto
 extern hora
@@ -15,11 +18,10 @@ global IncrementarSegundo
 global EsperarUmSegundo
 global IncrementarMinuto
 global IncrementarHora
+global IncrementarData
+global EsperarUmSegundo
 
-;=================================
-; EsperarUmSegundo()
-; Aguarda 1 segundo
-;=================================
+
 
 EsperarUmSegundo:
 
@@ -29,10 +31,6 @@ EsperarUmSegundo:
     syscall
 
     ret
-
-;=================================
-; IncrementarSegundo()
-;=================================
 
 IncrementarSegundo:
 
@@ -67,6 +65,34 @@ IncrementarHora:
     jl .fimHora
 
     mov byte [hora], 0
+    
+    call IncrementarData
 
 .fimHora:
+    ret
+
+
+IncrementarData:
+
+    inc byte [dia]
+
+    cmp byte [dia], 32
+    jl .fimData
+
+    ; Reinicia o dia
+    mov byte [dia], 1
+
+    ; Incrementa o mês
+    inc byte [mes]
+
+    cmp byte [mes], 13
+    jl .fimData
+
+    ; Reinicia o mês
+    mov byte [mes], 1
+
+    ; Incrementa o ano
+    inc word [ano]
+
+.fimData:
     ret
