@@ -1,5 +1,5 @@
 extern LimparTela
-extern TelaRelogio
+extern Configuracao
 extern IncrementarSegundo
 extern EsperarUmSegundo
 
@@ -15,7 +15,7 @@ MainLoop:
     call LimparTela
 
     ; Exibe a tela do relógio
-    call TelaRelogio
+    call Configuracao
 
     ; Aguarda 1 segundo
     call EsperarUmSegundo
