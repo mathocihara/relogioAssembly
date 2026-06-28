@@ -1,8 +1,9 @@
 extern LimparTela
-extern Configuracao
+extern MenuPrincipal
 extern IncrementarSegundo
 extern EsperarUmSegundo
-
+extern LerTecla
+extern MenuPrincipal
 
 section .text
 global _start
@@ -15,14 +16,15 @@ MainLoop:
     call LimparTela
 
     ; Exibe a tela do relógio
-    call Configuracao
+    call MenuPrincipal
 
-    ; Aguarda 1 segundo
-    call EsperarUmSegundo
-
-    ; Atualiza os segundos
-    call IncrementarSegundo
-
-    ; Repete indefinidamente
+    call LerTecla 
+    cmp al, '0'
+    je Sair
+    
     jmp MainLoop
-	
+
+Sair:
+    mov rax, 60
+    xor rdi, rdi
+    syscall
