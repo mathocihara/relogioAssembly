@@ -1,2 +1,5 @@
+*.o
 relogio
-
+teste
+wsl
+*.out

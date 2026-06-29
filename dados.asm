@@ -1,10 +1,9 @@
  section .data
 
-global hora
-global minuto
-global segundo
+global hora 
+global minuto 
+global segundo 
 global formatoHora
-
 
 global dia
 global mes

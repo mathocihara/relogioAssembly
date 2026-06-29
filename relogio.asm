@@ -1,6 +1,6 @@
+global TelaRelogio
 extern ImprimirString
-
-
+extern formatoHora
 extern hora
 extern minuto
 extern segundo
@@ -9,6 +9,10 @@ extern mes
 extern ano
 
 section .data
+
+bufferPeriodo db " AM",10
+tamBufferPeriodo equ $ - bufferPeriodo
+
 
 titulo db "===== RELOGIO DIGITAL =====",10
 tamTitulo equ $ - titulo
@@ -42,6 +46,31 @@ TelaRelogio:
 
     ; Converte hora
     mov al, [hora]
+
+    
+    ; Define AM como padrão
+    mov byte [bufferPeriodo + 1], 'A'
+    mov byte [bufferPeriodo + 2], 'M'
+
+    ; Se hora >= 12, muda para PM
+    cmp al, 12
+    jl VerificarFormato
+
+    mov byte [bufferPeriodo + 1], 'P'
+
+VerificarFormato:
+    cmp byte [formatoHora], 12
+    jne ConverterHora
+
+    ; Se a hora for maior que 12, converte
+    cmp al, 12
+    jle ConverterHora
+
+    sub al, 12
+
+ConverterHora:
+
+    xor ah, ah
     mov bl, 10
     div bl
 
@@ -115,6 +144,16 @@ TelaRelogio:
     mov rdx, tamBufferHora
     call ImprimirString
 
+    ; Imprime HH:MM:SS
+    cmp byte [formatoHora], 12
+    jne ContinuarData
+
+    mov rsi, bufferPeriodo
+    mov rdx, tamBufferPeriodo
+    call ImprimirString
+	
+	
+ContinuarData:
     mov al, [dia]
     xor ah, ah
     mov bl, 10
@@ -160,4 +199,6 @@ TelaRelogio:
     mov rsi, bufferData
     mov rdx, tamBufferData
     call ImprimirString
+
+
 ret
