@@ -3,6 +3,7 @@ extern MostrarMenuPrincipal
 extern MostrarMenuRelogio
 extern AjustarHora
 extern LerOpcaoMenu
+extern AjustarData
 
 global _start
 
@@ -41,7 +42,7 @@ MenuRelogio:
     je AjustarHorario
 
     cmp al, '4'
-    je AjustarData
+    je AjustarDataMenu
 
     cmp al, '0'
     je menu
@@ -60,9 +61,9 @@ AjustarHorario:
 ;=========================================
 ; AJUSTAR DATA (placeholder)
 ;=========================================
-AjustarData:
+AjustarDataMenu:
+    call AjustarData
     jmp MenuRelogio
-
 
 ;=========================================
 ; SAÍDA
