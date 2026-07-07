@@ -1,33 +1,46 @@
 ;==============================================================
 ; sistema/teclado.asm
-;
-; Teclado simples e não-bloqueante (Linux/WSL)
-; usando syscall read + terminal já configurado pelo C
 ;==============================================================
 
 default rel
 
+global InicializarTeclado
+global RestaurarTeclado
+global LerTecla
+
+extern InicializarTerminal
+extern RestaurarTerminal
+
 section .text
 
-global LerTecla
+;==============================================================
+; InicializarTeclado
+;==============================================================
+InicializarTeclado:
+    call InicializarTerminal
+    ret
+
+;==============================================================
+; RestaurarTeclado
+;==============================================================
+RestaurarTeclado:
+    call RestaurarTerminal
+    ret
 
 ;==============================================================
 ; LerTecla
 ;
 ; retorno:
-; AL = tecla pressionada
-; AL = 0 se nada
+;   AL = tecla pressionada
+;   AL = 0 se nada foi pressionado
 ;==============================================================
-
 LerTecla:
-
     sub rsp, 8
 
     mov rax, 0          ; sys_read
     mov rdi, 0          ; stdin
-    mov rsi, rsp       ; buffer
-    mov rdx, 1         ; 1 byte
-
+    mov rsi, rsp        ; buffer
+    mov rdx, 1          ; lê 1 byte
     syscall
 
     cmp rax, 1
@@ -40,15 +53,4 @@ LerTecla:
 .sem_tecla:
     xor al, al
     add rsp, 8
-    ret
-
-global InicializarTeclado
-global RestaurarTeclado
-
-section .text
-
-InicializarTeclado:
-    ret
-
-RestaurarTeclado:
     ret

@@ -1,13 +1,11 @@
 #include <stdlib.h>
 
-// ativa modo real-time do terminal
-void InicializarTerminal()
+void InicializarTerminal(void)
 {
     system("stty -echo -icanon time 0 min 0");
 }
 
-// restaura terminal normal
-void RestaurarTerminal()
+void RestaurarTerminal(void)
 {
     system("stty sane");
 }

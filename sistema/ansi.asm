@@ -8,14 +8,11 @@ default rel
 
 section .data
 
-; ESC = 27
-ESC db 27
-
-cls db "[2J",0
-home db "[H",0
-
-hide_cursor db "[?25l",0
-show_cursor db "[?25h",0
+; Strings ANSI completas
+ansi_cls         db 27, "[2J", 0
+ansi_home        db 27, "[H", 0
+ansi_hide_cursor db 27, "[?25l", 0
+ansi_show_cursor db 27, "[?25h", 0
 
 section .text
 
@@ -26,60 +23,34 @@ global MostrarCursor
 
 extern ImprimirString
 
-
 ;==============================================================
 ; LimparTela
 ;==============================================================
 LimparTela:
-
-    ; ESC + [2J
-    mov rdi, ESC
+    mov rdi, ansi_cls
     call ImprimirString
-
-    mov rdi, cls
-    call ImprimirString
-
     ret
-
 
 ;==============================================================
 ; CursorHome
 ;==============================================================
 CursorHome:
-
-    ; ESC + [H
-    mov rdi, ESC
+    mov rdi, ansi_home
     call ImprimirString
-
-    mov rdi, home
-    call ImprimirString
-
     ret
-
 
 ;==============================================================
 ; EsconderCursor
 ;==============================================================
 EsconderCursor:
-
-    mov rdi, ESC
+    mov rdi, ansi_hide_cursor
     call ImprimirString
-
-    mov rdi, hide_cursor
-    call ImprimirString
-
     ret
-
 
 ;==============================================================
 ; MostrarCursor
 ;==============================================================
 MostrarCursor:
-
-    mov rdi, ESC
+    mov rdi, ansi_show_cursor
     call ImprimirString
-
-    mov rdi, show_cursor
-    call ImprimirString
-
     ret

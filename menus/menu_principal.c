@@ -2,8 +2,6 @@
 
 void MostrarMenuPrincipal(void)
 {
-    printf("\033[H\033[J"); // limpa tela
-
     printf("====================================\n");
     printf("           MENU PRINCIPAL           \n");
     printf("====================================\n\n");
