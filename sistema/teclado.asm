@@ -1,54 +1,50 @@
-;==============================================================
-; sistema/teclado.asm
-;
-; Teclado simples e não-bloqueante (Linux/WSL)
-; usando syscall read + terminal já configurado pelo C
-;==============================================================
-
 default rel
+
+section .bss
+tecla resb 1
 
 section .text
 
 global LerTecla
+global LimparLinhaEntrada
+global LerOpcaoMenu
 
-;==============================================================
-; LerTecla
-;
-; retorno:
-; AL = tecla pressionada
-; AL = 0 se nada
-;==============================================================
 
 LerTecla:
-
-    sub rsp, 8
-
-    mov rax, 0          ; sys_read
-    mov rdi, 0          ; stdin
-    mov rsi, rsp       ; buffer
-    mov rdx, 1         ; 1 byte
-
+    mov rax, 0
+    mov rdi, 0
+    mov rsi, tecla
+    mov rdx, 1
     syscall
 
-    cmp rax, 1
-    jne .sem_tecla
-
-    mov al, [rsp]
-    add rsp, 8
+    mov al, [tecla]
     ret
 
-.sem_tecla:
-    xor al, al
-    add rsp, 8
+
+LerOpcaoMenu:
+.ler:
+    call LerTecla
+
+    cmp al, 10
+    je .ler
+
+    cmp al, 13
+    je .ler
+
     ret
 
-global InicializarTeclado
-global RestaurarTeclado
+; Consome tudo até encontrar ENTER
+LimparLinhaEntrada:
+.ler:
+    call LerTecla
 
-section .text
+    cmp al, 10          ; '\n'
+    je .fim
 
-InicializarTeclado:
-    ret
+    cmp al, 13          ; '\r'
+    je .fim
 
-RestaurarTeclado:
+    jmp .ler
+
+.fim:
     ret

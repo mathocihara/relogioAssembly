@@ -1,184 +1,145 @@
-;==============================================================
-; principal.asm
-;==============================================================
+extern LimparTela
+extern MostrarMenuPrincipal
+extern MostrarMenuRelogio
+extern MostrarMenuTemporizador
 
-default rel
+extern AjustarHora
+extern AjustarData
+
+extern AjustarTemporizador
+extern MostrarTelaTemporizadorEdicao
+extern IniciarTemporizador
+extern PausarTemporizador
+extern ReiniciarTemporizador
+
+extern LerOpcaoMenu
 
 global _start
 
-;==============================================================
-; SISTEMA
-;==============================================================
-
-extern InicializarTeclado
-extern RestaurarTeclado
-extern LerTecla
-
-extern LimparTela
-extern CursorHome
-
-extern ImprimirString
-
-extern MostrarMenuPrincipal
-
-; tempo
-extern AtualizarHorarioDataSistema
-extern TextoHorarioSistema
-extern TextoDataSistema
-
-; delay
-extern Esperar1Segundo
-
-; cronômetro / timer
-extern Cronometro
-extern Temporizador
-extern IncrementarTempo
-extern DecrementarTempo
-extern TempoParaTexto
-
-section .data
-
-titulo db "==== SISTEMA DE RELOGIO ====",10,0
-prompt db "Pressione uma opcao: ",0
-
-buffer_tempo db "00:00:00",10,0
-
-;==============================================================
-; ENTRY
-;==============================================================
 section .text
 
 _start:
 
-    call InicializarTeclado
-
-.loop_principal:
-
+menu:
     call LimparTela
-    call CursorHome
-
-    mov rdi, titulo
-    call ImprimirString
-
     call MostrarMenuPrincipal
 
-    mov rdi, prompt
-    call ImprimirString
-
-    call LerTecla
-    cmp al, 0
-    je .loop_principal
-
-    cmp al, '0'
-    je .sair
+.espera:
+    call LerOpcaoMenu
 
     cmp al, '1'
-    je .relogio
-
-    cmp al, '2'
-    je .cronometro
+    je MenuRelogio
 
     cmp al, '3'
-    je .temporizador
+    je MenuTemporizador
+
+    cmp al, '0'
+    je Sair
+
+    jmp .espera
+
+
+;=========================================
+; MENU RELÓGIO
+;=========================================
+MenuRelogio:
+    call LimparTela
+    call MostrarMenuRelogio
+
+.EsperaRelogio:
+    call LerOpcaoMenu
+
+    cmp al, '3'
+    je AjustarHorario
 
     cmp al, '4'
-    je .alarmes
+    je AjustarDataMenu
 
-    jmp .loop_principal
+    cmp al, '0'
+    je menu
 
-;==============================================================
-; RELÓGIO
-;==============================================================
-.relogio:
+    jmp .EsperaRelogio
 
-.relogio_loop:
 
+
+;=========================================
+; AJUSTAR HORÁRIO
+;=========================================
+AjustarHorario:
+    call AjustarHora
+    jmp MenuRelogio
+
+
+;=========================================
+; AJUSTAR DATA (placeholder)
+;=========================================
+AjustarDataMenu:
+    call AjustarData
+    jmp MenuRelogio
+
+;=========================================
+; MENU TEMPORIZADOR
+;=========================================
+MenuTemporizador:
     call LimparTela
-    call CursorHome
+    call MostrarMenuTemporizador
 
-    call AtualizarHorarioDataSistema
+.EsperaTemporizador:
+    call LerOpcaoMenu
 
-    mov rdi, TextoHorarioSistema
-    call ImprimirString
+    cmp al, '1'
+    je InserirTempoTemporizador
 
-    mov rdi, TextoDataSistema
-    call ImprimirString
-
-    call LerTecla
     cmp al, '0'
-    je .loop_principal
+    je menu
 
-    call Esperar1Segundo
-    jmp .relogio_loop
+    jmp .EsperaTemporizador
 
-;==============================================================
-; CRONÔMETRO
-;==============================================================
-.cronometro:
 
-.crono_loop:
+InserirTempoTemporizador:
+    call AjustarTemporizador
+    jmp TelaTemporizadorEdicao
 
-    mov rdi, Cronometro
-    call IncrementarTempo
+;===========================================	
+;==========================================
+TelaTemporizadorEdicao:
+    call MostrarTelaTemporizadorEdicao
 
-    mov rdi, Cronometro
-    mov rsi, buffer_tempo
-    call TempoParaTexto
+.EsperaTelaTemporizadorEdicao:
+    call LerOpcaoMenu
 
-    mov rdi, buffer_tempo
-    call ImprimirString
+    cmp al, '1'
+    je AcaoIniciarTemporizador
 
-    call LerTecla
+    cmp al, '2'
+    je AcaoPausarTemporizador
+
+    cmp al, '3'
+    je AcaoReiniciarTemporizador
+
     cmp al, '0'
-    je .loop_principal
+    je MenuTemporizador
 
-    call Esperar1Segundo
-    jmp .crono_loop
+    jmp .EsperaTelaTemporizadorEdicao
 
-;==============================================================
-; TEMPORIZADOR
-;==============================================================
-.temporizador:
 
-.timer_loop:
+AcaoIniciarTemporizador:
+    call IniciarTemporizador
+    jmp TelaTemporizadorEdicao
 
-    mov rdi, Temporizador
-    call DecrementarTempo
+AcaoPausarTemporizador:
+    call PausarTemporizador
+    jmp TelaTemporizadorEdicao
 
-    mov rdi, Temporizador
-    mov rsi, buffer_tempo
-    call TempoParaTexto
+AcaoReiniciarTemporizador:
+    call ReiniciarTemporizador
+    jmp TelaTemporizadorEdicao
 
-    mov rdi, buffer_tempo
-    call ImprimirString
 
-    call LerTecla
-    cmp al, '0'
-    je .loop_principal
-
-    call Esperar1Segundo
-    jmp .timer_loop
-
-;==============================================================
-; ALARMES
-;==============================================================
-.alarmes:
-
-.alarmes_loop:
-
-    call LerTecla
-    cmp al, '0'
-    je .loop_principal
-
-    jmp .alarmes_loop
-
-;==============================================================
-; SAIR
-;==============================================================
-.sair:
-
-    call RestaurarTeclado
-
+;=========================================
+; SAÍDA
+;=========================================
+Sair:
     mov rax, 60
     xor rdi, rdi
     syscall

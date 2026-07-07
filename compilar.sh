@@ -1,50 +1,40 @@
 #!/bin/bash
 
-echo "Compilando sistema..."
+set -e
 
 rm -rf build
-mkdir -p build
+mkdir build
 
-INCLUDE="-Isistema/ -Iinclude/"
+echo "== Sistema =="
+nasm -f elf64 sistema/entrada_saida.asm -o build/entrada_saida.o
+nasm -f elf64 sistema/teclado.asm -o build/teclado.o
 
-# ======================
-# ASM
-# ======================
-nasm -f elf64 $INCLUDE principal.asm -o build/principal.o
-nasm -f elf64 $INCLUDE sistema/dados.asm -o build/dados.o
-nasm -f elf64 $INCLUDE sistema/entrada_saida.asm -o build/entrada_saida.o
-nasm -f elf64 $INCLUDE sistema/teclado.asm -o build/teclado.o
-nasm -f elf64 $INCLUDE sistema/tempo.asm -o build/tempo.o
-nasm -f elf64 $INCLUDE sistema/ansi.asm -o build/ansi.o
+echo "== Menus =="
+nasm -f elf64 menus/menu_principal.asm -o build/menu_principal.o
+nasm -f elf64 menus/menu_relogio.asm -o build/menu_relogio.o
+nasm -f elf64 menus/menu_temporizador.asm -o build/menu_temporizador.o
+nasm -f elf64 menus/menu_temporizador_edicao.asm -o build/menu_temporizador_edicao.o
 
-# ======================
-# C (SEM dados.c !!!)
-# ======================
-gcc -c menus/menu_principal.c -o build/menu_principal.o
-gcc -c menus/menu_relogio.c -o build/menu_relogio.o
-gcc -c menus/menu_cronometro.c -o build/menu_cronometro.o
-gcc -c menus/menu_temporizador.c -o build/menu_temporizador.o
-gcc -c menus/menu_alarmes.c -o build/menu_alarmes.o
+echo "== Modulos =="
+nasm -f elf64 modulos/relogio.asm -o build/relogio.o
+nasm -f elf64 modulos/temporizador.asm -o build/temporizador.o
+nasm -f elf64 modulos/temporizador_edicao.asm -o build/temporizador_edicao.o
 
-# ======================
-# LINK FINAL
-# ======================
-echo "Linkando..."
+echo "== Principal =="
+nasm -f elf64 principal.asm -o build/principal.o
 
-gcc \
-  -no-pie \
-  -nostartfiles \
-  -Wl,-e,_start \
-  build/principal.o \
-  build/dados.o \
-  build/entrada_saida.o \
-  build/teclado.o \
-  build/tempo.o \
-  build/ansi.o \
-  build/menu_principal.o \
-  build/menu_relogio.o \
-  build/menu_cronometro.o \
-  build/menu_temporizador.o \
-  build/menu_alarmes.o \
-  -o app \
-  -lc
+echo "== Linkando =="
+ld \
+build/entrada_saida.o \
+build/teclado.o \
+build/menu_principal.o \
+build/menu_relogio.o \
+build/menu_temporizador.o \
+build/menu_temporizador_edicao.o \
+build/relogio.o \
+build/temporizador.o \
+build/temporizador_edicao.o \
+build/principal.o \
+-o build/app
+
+echo "OK!"
