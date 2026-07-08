@@ -1,8 +1,3 @@
-;==============================================================
-; principal.asm
-; Menu principal do sistema
-;==============================================================
-
 default rel
 
 global main
@@ -16,11 +11,7 @@ extern CursorHome
 extern ImprimirString
 
 extern MostrarMenuPrincipal
-
 extern ModuloRelogio
-extern ModuloCronometro
-extern ModuloTemporizador
-extern ModuloAlarmes
 
 section .data
 titulo db "==== SISTEMA DE RELOGIO ====",10,0
@@ -31,7 +22,7 @@ section .text
 main:
     push rbp
     mov rbp, rsp
-    sub rsp, 8                ; alinhamento da stack para chamadas C
+    sub rsp, 8                ; alinhamento para chamadas C/libc
 
     call InicializarTeclado
 
@@ -58,31 +49,10 @@ main:
     cmp al, '1'
     je .abrir_relogio
 
-    cmp al, '2'
-    je .abrir_cronometro
-
-    cmp al, '3'
-    je .abrir_temporizador
-
-    cmp al, '4'
-    je .abrir_alarmes
-
     jmp .loop_principal
 
 .abrir_relogio:
     call ModuloRelogio
-    jmp .loop_principal
-
-.abrir_cronometro:
-    call ModuloCronometro
-    jmp .loop_principal
-
-.abrir_temporizador:
-    call ModuloTemporizador
-    jmp .loop_principal
-
-.abrir_alarmes:
-    call ModuloAlarmes
     jmp .loop_principal
 
 .sair:

@@ -1,6 +1,6 @@
 ;==============================================================
 ; modulos/relogio.asm
-; Módulo Relógio - versão com hora/data reais + alarme
+; Módulo Relógio - versão com hora/data reais
 ;==============================================================
 
 default rel
@@ -20,7 +20,7 @@ extern TempoEpoch
 extern PonteiroTM
 extern HorarioSistema
 
-extern VerificarAlarmes
+; extern VerificarAlarmes
 
 extern time
 extern localtime
@@ -75,12 +75,7 @@ AtualizarHorarioDataSistema:
     mov rcx, [PonteiroTM]
     call strftime
 
-    ;----------------------------------------------------------
-    ; Atualiza HorarioSistema em formato numérico:
-    ; byte 0 = hora
-    ; byte 1 = minuto
-    ; byte 2 = segundo
-    ;----------------------------------------------------------
+    ; Atualiza HorarioSistema em formato numérico
     mov rax, [PonteiroTM]
 
     mov edx, [rax + 8]                  ; hora
@@ -97,7 +92,6 @@ AtualizarHorarioDataSistema:
     pop rbp
     ret
 
-
 ;==============================================================
 ; ModuloRelogio
 ;==============================================================
@@ -107,8 +101,8 @@ ModuloRelogio:
     ; atualiza relógio real
     call AtualizarHorarioDataSistema
 
-    ; verifica se algum alarme disparou
-    call VerificarAlarmes
+    ; se quiser reativar alarmes depois:
+    ; call VerificarAlarmes
 
     ; desenha tela
     call LimparTela
@@ -141,12 +135,22 @@ ModuloRelogio:
     mov rdi, txtVoltar
     call ImprimirString
 
-    call Esperar1Segundo
-
+    ; lê tecla sem bloquear
     call LerTecla
+
+    ; nenhuma tecla pressionada
+    cmp al, 0
+    je .esperar
+
+    ; tecla 0 = sair do relógio
     cmp al, '0'
     je .sair
 
+    ; qualquer outra tecla é ignorada
+    jmp .esperar
+
+.esperar:
+    call Esperar1Segundo
     jmp .loop
 
 .sair:
