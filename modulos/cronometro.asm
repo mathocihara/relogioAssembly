@@ -52,17 +52,6 @@ ModuloCronometro:
 .loop_cronometro:
 
     ;------------------------------------------
-    ; Se estiver rodando, incrementa 1 segundo
-    ;------------------------------------------
-    cmp dword [EstadoCronometro], EXECUTANDO
-    jne .nao_incrementa
-
-    mov rdi, Cronometro
-    call IncrementarTempo
-
-.nao_incrementa:
-
-    ;------------------------------------------
     ; Atualiza texto HH:MM:SS
     ;------------------------------------------
     mov rdi, Cronometro
@@ -132,14 +121,13 @@ ModuloCronometro:
     call ImprimirString
 
     ;------------------------------------------
-    ; Espera 1 segundo
-    ;------------------------------------------
-    call Esperar1Segundo
-
-    ;------------------------------------------
-    ; Lê tecla
+    ; Lê tecla primeiro
     ;------------------------------------------
     call LerTecla
+
+    ; nenhuma tecla pressionada
+    cmp al, 0
+    je .sem_tecla
 
     cmp al, '0'
     je .sair
@@ -153,20 +141,37 @@ ModuloCronometro:
     cmp al, '3'
     je .reiniciar
 
-    jmp .loop_cronometro
+    jmp .sem_tecla
 
 .iniciar:
     mov dword [EstadoCronometro], EXECUTANDO
-    jmp .loop_cronometro
+    jmp .esperar
 
 .pausar:
     mov dword [EstadoCronometro], PAUSADO
-    jmp .loop_cronometro
+    jmp .esperar
 
 .reiniciar:
     mov rdi, Cronometro
     call ZerarTempo
     mov dword [EstadoCronometro], PARADO
+    jmp .loop_cronometro
+
+.sem_tecla:
+    ;------------------------------------------
+    ; Se estiver rodando, incrementa 1 segundo
+    ;------------------------------------------
+    cmp dword [EstadoCronometro], EXECUTANDO
+    jne .esperar
+
+    mov rdi, Cronometro
+    call IncrementarTempo
+
+.esperar:
+    ;------------------------------------------
+    ; Espera 1 segundo
+    ;------------------------------------------
+    call Esperar1Segundo
     jmp .loop_cronometro
 
 .sair:

@@ -21,6 +21,7 @@ nasm -f elf64 $INCLUDE sistema/ansi.asm -o build/ansi.o
 # ASM - módulos
 # ======================
 nasm -f elf64 $INCLUDE modulos/relogio.asm -o build/relogio.o
+nasm -f elf64 $INCLUDE modulos/cronometro.asm -o build/cronometro.o
 
 # ======================
 # ASM - menus
@@ -51,6 +52,7 @@ gcc \
   build/tempo.o \
   build/ansi.o \
   build/relogio.o \
+  build/cronometro.o \
   build/menu_principal.o \
   build/menu_relogio.o \
   build/menu_cronometro.o \

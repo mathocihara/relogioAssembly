@@ -12,6 +12,7 @@ extern ImprimirString
 
 extern MostrarMenuPrincipal
 extern ModuloRelogio
+extern ModuloCronometro
 
 section .data
 titulo db "==== SISTEMA DE RELOGIO ====",10,0
@@ -49,10 +50,17 @@ main:
     cmp al, '1'
     je .abrir_relogio
 
+    cmp al, '2'
+    je .abrir_cronometro
+
     jmp .loop_principal
 
 .abrir_relogio:
     call ModuloRelogio
+    jmp .loop_principal
+
+.abrir_cronometro:
+    call ModuloCronometro
     jmp .loop_principal
 
 .sair:
