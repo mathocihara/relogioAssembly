@@ -197,21 +197,29 @@ DataParaTexto:
     ret
 
 Esperar100ms:
+    sub rsp, 8
     mov rdi, 100000
     call usleep
+    add rsp, 8
     ret
 
 Esperar250ms:
+    sub rsp, 8
     mov rdi, 250000
     call usleep
+    add rsp, 8
     ret
 
 Esperar500ms:
+    sub rsp, 8
     mov rdi, 500000
     call usleep
+    add rsp, 8
     ret
 
 Esperar1Segundo:
+    sub rsp, 8
     mov rdi, 1000000
     call usleep
+    add rsp, 8
     ret
