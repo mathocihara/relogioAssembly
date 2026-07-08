@@ -1,5 +1,6 @@
 ;==============================================================
 ; sistema/tempo.asm
+; Funções genéricas de tempo
 ;==============================================================
 
 default rel
@@ -7,17 +8,7 @@ default rel
 %include "constantes.inc"
 %include "estruturas.inc"
 
-extern TextoHorarioSistema
-extern TextoDataSistema
-
-extern time
-extern localtime
-extern strftime
 extern usleep
-
-global AtualizarHorarioSistema
-global AtualizarDataSistema
-global AtualizarHorarioDataSistema
 
 global IncrementarTempo
 global DecrementarTempo
@@ -32,128 +23,57 @@ global Esperar250ms
 global Esperar500ms
 global Esperar1Segundo
 
-section .data
-FormatoHora db "%H:%M:%S",0
-FormatoData db "%d/%m/%Y",0
-
-section .bss
-tempo_epoch  resq 1
-ponteiro_tm  resq 1
-
 section .text
 
-;==============================================================
-; AtualizarHorarioSistema
-;==============================================================
-AtualizarHorarioSistema:
-    sub rsp, 8
-
-    ; time(&tempo_epoch)
-    lea rdi, [tempo_epoch]
-    call time
-
-    ; tm = localtime(&tempo_epoch)
-    lea rdi, [tempo_epoch]
-    call localtime
-    mov [ponteiro_tm], rax
-
-    ; strftime(TextoHorarioSistema, 16, "%H:%M:%S", tm)
-    lea rdi, [TextoHorarioSistema]
-    mov rsi, 16
-    lea rdx, [FormatoHora]
-    mov rcx, [ponteiro_tm]
-    call strftime
-
-    add rsp, 8
-    ret
-
-;==============================================================
-; AtualizarDataSistema
-;==============================================================
-AtualizarDataSistema:
-    sub rsp, 8
-
-    ; strftime(TextoDataSistema, 16, "%d/%m/%Y", tm)
-    lea rdi, [TextoDataSistema]
-    mov rsi, 16
-    lea rdx, [FormatoData]
-    mov rcx, [ponteiro_tm]
-    call strftime
-
-    add rsp, 8
-    ret
-
-;==============================================================
-; AtualizarHorarioDataSistema
-;==============================================================
-AtualizarHorarioDataSistema:
-    call AtualizarHorarioSistema
-    call AtualizarDataSistema
-    ret
-
-;==============================================================
-; IncrementarTempo(TEMPO *t)
-; RDI = ponteiro para TEMPO
-;==============================================================
 IncrementarTempo:
     inc byte [rdi + TEMPO.segundo]
-
     cmp byte [rdi + TEMPO.segundo], 60
     jl .fim
 
     mov byte [rdi + TEMPO.segundo], 0
     inc byte [rdi + TEMPO.minuto]
-
     cmp byte [rdi + TEMPO.minuto], 60
     jl .fim
 
     mov byte [rdi + TEMPO.minuto], 0
     inc byte [rdi + TEMPO.hora]
-
     cmp byte [rdi + TEMPO.hora], 24
     jl .fim
 
     mov byte [rdi + TEMPO.hora], 0
-
 .fim:
     ret
 
-;==============================================================
-; DecrementarTempo(TEMPO *t)
-;==============================================================
 DecrementarTempo:
     cmp byte [rdi + TEMPO.hora], 0
     jne .continua
     cmp byte [rdi + TEMPO.minuto], 0
     jne .continua
     cmp byte [rdi + TEMPO.segundo], 0
-    jne .continua
-    ret
+    je .fim
 
 .continua:
     cmp byte [rdi + TEMPO.segundo], 0
-    jne .dec_segundo
+    jne .dec_seg
 
     mov byte [rdi + TEMPO.segundo], 59
 
     cmp byte [rdi + TEMPO.minuto], 0
-    jne .dec_minuto
+    jne .dec_min
 
     mov byte [rdi + TEMPO.minuto], 59
     dec byte [rdi + TEMPO.hora]
-    ret
+    jmp .fim
 
-.dec_minuto:
+.dec_min:
     dec byte [rdi + TEMPO.minuto]
-    ret
+    jmp .fim
 
-.dec_segundo:
+.dec_seg:
     dec byte [rdi + TEMPO.segundo]
+.fim:
     ret
 
-;==============================================================
-; ZerarTempo(TEMPO *t)
-;==============================================================
 ZerarTempo:
     mov byte [rdi + TEMPO.hora], 0
     mov byte [rdi + TEMPO.minuto], 0
@@ -161,11 +81,6 @@ ZerarTempo:
     mov byte [rdi + TEMPO.estado], 0
     ret
 
-;==============================================================
-; CopiarTempo(dest, src)
-; RDI = destino
-; RSI = origem
-;==============================================================
 CopiarTempo:
     mov al, [rsi + TEMPO.hora]
     mov [rdi + TEMPO.hora], al
@@ -180,15 +95,6 @@ CopiarTempo:
     mov [rdi + TEMPO.estado], al
     ret
 
-;==============================================================
-; CompararTempo(a, b)
-; RDI = a
-; RSI = b
-; retorna:
-;   0  -> iguais
-;   1  -> a > b
-;  -1  -> a < b
-;==============================================================
 CompararTempo:
     mov al, [rdi + TEMPO.hora]
     cmp al, [rsi + TEMPO.hora]
@@ -205,24 +111,21 @@ CompararTempo:
     ja .maior
     jb .menor
 
-    xor rax, rax
+    xor eax, eax
     ret
 
 .maior:
-    mov rax, 1
+    mov eax, 1
     ret
 
 .menor:
-    mov rax, -1
+    mov eax, -1
     ret
 
-;==============================================================
-; TempoParaTexto(TEMPO *t, char *out)
-; RDI = TEMPO*
-; RSI = buffer "HH:MM:SS"
-;==============================================================
 TempoParaTexto:
-    ; hora
+    push rbx
+
+    ; HH
     movzx eax, byte [rdi + TEMPO.hora]
     mov ebx, 10
     xor edx, edx
@@ -231,10 +134,9 @@ TempoParaTexto:
     add dl, '0'
     mov [rsi], al
     mov [rsi+1], dl
-
     mov byte [rsi+2], ':'
 
-    ; minuto
+    ; MM
     movzx eax, byte [rdi + TEMPO.minuto]
     mov ebx, 10
     xor edx, edx
@@ -243,10 +145,9 @@ TempoParaTexto:
     add dl, '0'
     mov [rsi+3], al
     mov [rsi+4], dl
-
     mov byte [rsi+5], ':'
 
-    ; segundo
+    ; SS
     movzx eax, byte [rdi + TEMPO.segundo]
     mov ebx, 10
     xor edx, edx
@@ -257,15 +158,14 @@ TempoParaTexto:
     mov [rsi+7], dl
 
     mov byte [rsi+8], 0
+
+    pop rbx
     ret
 
-;==============================================================
-; DataParaTexto(DATA *d, char *out)
-; RDI = DATA*
-; RSI = buffer "DD/MM/AAAA"
-;==============================================================
 DataParaTexto:
-    ; dia
+    push rbx
+
+    ; DD
     movzx eax, byte [rdi + DATA.dia]
     mov ebx, 10
     xor edx, edx
@@ -274,10 +174,9 @@ DataParaTexto:
     add dl, '0'
     mov [rsi], al
     mov [rsi+1], dl
-
     mov byte [rsi+2], '/'
 
-    ; mes
+    ; MM
     movzx eax, byte [rdi + DATA.mes]
     mov ebx, 10
     xor edx, edx
@@ -286,63 +185,33 @@ DataParaTexto:
     add dl, '0'
     mov [rsi+3], al
     mov [rsi+4], dl
-
     mov byte [rsi+5], '/'
 
-    ; ano
-    mov ax, [rdi + DATA.ano]
-    mov bx, 1000
-    xor dx, dx
-    div bx
-    add al, '0'
-    mov [rsi+6], al
-
-    mov ax, dx
-    mov bx, 100
-    xor dx, dx
-    div bx
-    add al, '0'
-    mov [rsi+7], al
-
-    mov ax, dx
-    mov bx, 10
-    xor dx, dx
-    div bx
-    add al, '0'
-    add dl, '0'
-    mov [rsi+8], al
-    mov [rsi+9], dl
-
+    mov byte [rsi+6], '2'
+    mov byte [rsi+7], '0'
+    mov byte [rsi+8], '0'
+    mov byte [rsi+9], '0'
     mov byte [rsi+10], 0
+
+    pop rbx
     ret
 
-;==============================================================
-; Delays
-;==============================================================
 Esperar100ms:
-    sub rsp, 8
     mov rdi, 100000
     call usleep
-    add rsp, 8
     ret
 
 Esperar250ms:
-    sub rsp, 8
     mov rdi, 250000
     call usleep
-    add rsp, 8
     ret
 
 Esperar500ms:
-    sub rsp, 8
     mov rdi, 500000
     call usleep
-    add rsp, 8
     ret
 
 Esperar1Segundo:
-    sub rsp, 8
     mov rdi, 1000000
     call usleep
-    add rsp, 8
     ret

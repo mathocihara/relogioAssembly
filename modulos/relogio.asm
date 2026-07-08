@@ -1,68 +1,148 @@
+;==============================================================
+; modulos/relogio.asm
+; Módulo Relógio - versão com hora/data reais + alarme
+;==============================================================
+
 default rel
 
 global ModuloRelogio
+global AtualizarHorarioDataSistema
 
 extern LimparTela
-extern ImprimirString
+extern CursorHome
 extern LerTecla
+extern ImprimirString
+extern Esperar1Segundo
+
+extern TextoHorarioSistema
+extern TextoDataSistema
+extern TempoEpoch
+extern PonteiroTM
+extern HorarioSistema
+
+extern VerificarAlarmes
+
+extern time
+extern localtime
+extern strftime
 
 section .data
+titulo1 db "====================================",10,0
+titulo2 db "              RELOGIO               ",10,0
+titulo3 db "====================================",10,10,0
 
-msg db "RELÓGIO (tempo do sistema)", 10
-len equ $ - msg
+txtHora   db "Hora: ",0
+txtQuebra db 10,0
+txtData   db "Data: ",0
+txtVoltar db 10,10,"0 - Voltar",10,0
 
-newline db 10
-
-section .bss
-ts resq 2
+FormatoHora db "%H:%M:%S",0
+FormatoData db "%d/%m/%Y",0
 
 section .text
 
+;==============================================================
+; AtualizarHorarioDataSistema
+; Atualiza:
+; - TextoHorarioSistema
+; - TextoDataSistema
+; - HorarioSistema (hora/minuto/segundo em bytes)
+;==============================================================
+AtualizarHorarioDataSistema:
+    push rbp
+    mov rbp, rsp
+
+    ; time(&TempoEpoch)
+    lea rdi, [TempoEpoch]
+    call time
+
+    ; tm = localtime(&TempoEpoch)
+    lea rdi, [TempoEpoch]
+    call localtime
+    mov [PonteiroTM], rax
+
+    ; strftime(TextoHorarioSistema, 16, "%H:%M:%S", tm)
+    lea rdi, [TextoHorarioSistema]
+    mov rsi, 16
+    lea rdx, [FormatoHora]
+    mov rcx, [PonteiroTM]
+    call strftime
+
+    ; strftime(TextoDataSistema, 16, "%d/%m/%Y", tm)
+    lea rdi, [TextoDataSistema]
+    mov rsi, 16
+    lea rdx, [FormatoData]
+    mov rcx, [PonteiroTM]
+    call strftime
+
+    ;----------------------------------------------------------
+    ; Atualiza HorarioSistema em formato numérico:
+    ; byte 0 = hora
+    ; byte 1 = minuto
+    ; byte 2 = segundo
+    ;----------------------------------------------------------
+    mov rax, [PonteiroTM]
+
+    mov edx, [rax + 8]                  ; hora
+    mov byte [HorarioSistema + 0], dl
+
+    mov edx, [rax + 4]                  ; minuto
+    mov byte [HorarioSistema + 1], dl
+
+    mov edx, [rax + 0]                  ; segundo
+    mov byte [HorarioSistema + 2], dl
+
+    mov byte [HorarioSistema + 3], 0
+
+    pop rbp
+    ret
+
+
+;==============================================================
+; ModuloRelogio
+;==============================================================
 ModuloRelogio:
 
 .loop:
+    ; atualiza relógio real
+    call AtualizarHorarioDataSistema
 
-    ; =========================
-    ; limpa tela
-    ; =========================
+    ; verifica se algum alarme disparou
+    call VerificarAlarmes
+
+    ; desenha tela
     call LimparTela
+    call CursorHome
 
-    ; =========================
-    ; pega tempo do sistema
-    ; =========================
-    mov rax, 228          ; clock_gettime
-    mov rdi, 0            ; CLOCK_REALTIME
-    mov rsi, ts
-    syscall
-
-    ; =========================
-    ; imprime título
-    ; =========================
-    mov rsi, msg
-    mov rdx, len
+    mov rdi, titulo1
     call ImprimirString
 
-    ; =========================
-    ; imprime timestamp bruto (debug inicial)
-    ; =========================
-    mov rax, [ts]
-    call print_num
-
-    mov rsi, newline
-    mov rdx, 1
+    mov rdi, titulo2
     call ImprimirString
 
-    ; =========================
-    ; delay ~1s (simples)
-    ; =========================
-    mov rcx, 200000000
-.delay:
-    dec rcx
-    jnz .delay
+    mov rdi, titulo3
+    call ImprimirString
 
-    ; =========================
-    ; saída
-    ; =========================
+    mov rdi, txtHora
+    call ImprimirString
+
+    mov rdi, TextoHorarioSistema
+    call ImprimirString
+
+    mov rdi, txtQuebra
+    call ImprimirString
+
+    mov rdi, txtData
+    call ImprimirString
+
+    mov rdi, TextoDataSistema
+    call ImprimirString
+
+    mov rdi, txtVoltar
+    call ImprimirString
+
+    call Esperar1Segundo
+
     call LerTecla
     cmp al, '0'
     je .sair
@@ -70,39 +150,4 @@ ModuloRelogio:
     jmp .loop
 
 .sair:
-    ret
-
-
-; =========================
-; print simples número
-; =========================
-print_num:
-    sub rsp, 32
-
-    mov rbx, 10
-    xor rcx, rcx
-
-.convert:
-    xor rdx, rdx
-    div rbx
-    add dl, '0'
-    mov [rsp+rcx], dl
-    inc rcx
-    test rax, rax
-    jnz .convert
-
-.print:
-    dec rcx
-    mov al, [rsp+rcx]
-
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, rsp
-    mov rdx, 1
-    syscall
-
-    test rcx, rcx
-    jnz .print
-
-    add rsp, 32
     ret
